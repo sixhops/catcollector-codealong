@@ -4,7 +4,7 @@ Thanks for coming back! In this installment of Cat Collector we will be connecti
 
 ## Connecting Django and Postgres
 
-There are a few settings we need to edit in order to have Django connect to our running Postgres. We'll start with the `catcollector/settings.py` file:
+There are a few settings we need to edit in order to have Django connect to our running Postgres. We'll start with the `catcollector/settings.py` file. Open it up and find the DATABASES section. Make it look like this:
 
 ```python
 # catcollector/settings.py
@@ -33,7 +33,7 @@ This is a way we can create the database without being inside the psql command-l
 
 # Connecting a model to our view
 
-1.  Lets create a `model` of our Cat instead of storing it hardcoded in our `views.py`. In our `main_app/models.py` file, change the code to reflect the following:
+1.  Let's create a `model` of our Cat instead of storing it hardcoded in our `views.py`. In our `main_app/models.py` file, change the code to reflect the following:
 
 	```python
 	# main_app/models.py
@@ -140,9 +140,9 @@ Django's ORM isn't so bad, right? In fact, it's rather understandable and easy t
 	# add this line...
 	from .models import Cat
 
-	def index(request):
+	def cats_index(request):
 	    cats = Cat.objects.all()
-	    return render(request, 'index.html', { 'cats':cats })
+	    return render(request, 'cats/index.html', { 'cats':cats })
 	
 	# remove the cat class and list at the bottom...
 	```
@@ -188,9 +188,9 @@ Now when we go back to our admin page, we'll see a link to our Cat model.  We ca
 
 Our `index.html` should still be showing valid Cat data because all we changed was where it was getting its data. But now that we know the function for reading the data of a single Cat, we can now implement that route in our project.
 
-The difference between an `index` page and a `show` or `details` page is how much data is shown about one Cat versus how much data is shown about all Cats. Frequently, we want to limit the data shown about each Cat in the list of all Cats. But we provide a way to link from that list to an individual page for each Cat that can show all of the detailed data about that Cat. Together, these two routes comprise the only `read` operations we will do on our database: Read one object, or Read all objects.
+The difference between an `index` page and a `show` or `details` page is `index` shows all cats on one page and `show` shows all details about one cat. Frequently, we want to limit the data shown about each Cat in the list of all Cats. But we provide a way to link from that list to an individual page for each Cat that can show all of the detailed data about that Cat. Together, these two routes comprise the only `read` operations we will do on our database: Read one object, or Read all objects.
 
-The pattern of creating a new url in `urls.py`, a new view function in `views.py`, and a new html file in `/template` will apply here. However, think about what we know about the "Read One" operation: the only way we can find the one Cat we are interested in is by knowing its ID. That means that we need a way to have a variable in our URL that can hold any valid Cat ID. Django provides syntax for setting this up.
+The pattern of creating a new url in `urls.py`, a new view function in `views.py`, and a new html file in `/templates` will apply here. However, think about what we know about the "Read One" operation: the only way we can find the one Cat we are interested in is by knowing its ID. That means that we need a way to have a variable in our URL that can hold any valid Cat ID. Django provides syntax for setting this up.
 
 1.  Let's add a `show` url with a variable that can hold the ID that the user is interested in. Open `main_app/urls.py`:
 
@@ -200,9 +200,9 @@ The pattern of creating a new url in `urls.py`, a new view function in `views.py
 	from . import views
 
 	urlpatterns = [
-	    path('', views.index, name='index'),
+	    ...
 			# add this line...
-	    path('<int:cat_id>/', views.show, name='show')
+	    path('cats/<int:cat_id>/', views.cats_show, name='cats_show')
 	]
 	```
 	The stuff in the pointy brackets is how we read URL parameters in Django. We say the data will be an integer (int) and then identify it with a variable named `cat_id`.
@@ -210,21 +210,21 @@ The pattern of creating a new url in `urls.py`, a new view function in `views.py
 2.  In our `main_app/views.py` file we will need to write a function to handle the HTTP Request received for the details page of a particular item.  Lets update our file to include this function:
 
 	```python
-	# main_app/views.py
-	...
-	def show(request, cat_id):
-  	cat = Cat.objects.get(id=cat_id)
-    return render(request, 'show.html', {'cat': cat})
+		# main_app/views.py
+		...
+		def show(request, cat_id):
+			cat = Cat.objects.get(id=cat_id)
+			return render(request, 'cats/show.html', {'cat': cat})
 	```
 
 	You'll notice that we are searching by id. Django automatically assigns our models incrementing id numbers to organize our tables. Thanks Django!  That way we can look up every single cat by their unique `id` given to us. That `id` will travel with every model so we don't have to worry about assigning them one or trying to maintain it in the back-end!  SO SWEET!
 
 	After we have made the DB call to retrieve our model, we will render a new view of the `show.html` template and pass in our model as an object for the template to use.
 
-3.  We will now create a `show.html` template page to render our single model view:
+3.  We will now create a `show.html` template page in `templates/cats` to render our single model view:
 
 	```html
-	<!-- main_app/templates/show.html -->
+	<!-- main_app/templates/cats/show.html -->
 	{% load staticfiles %}
 	<!DOCTYPE html>
 	<html>
@@ -232,7 +232,6 @@ The pattern of creating a new url in `urls.py`, a new view function in `views.py
 	    <title>catcollector</title>
 	    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.css">
 	    <link rel="stylesheet" type="text/css" href="{% static 'style.css' %}">
-
 	  </head>
 	  <body>
 	    <h1>catcollector</h1>
@@ -248,7 +247,7 @@ The pattern of creating a new url in `urls.py`, a new view function in `views.py
 4.  We can now view a single Cat on its dedicated show page!  Awesome!  To make our application actually useful, we need to create a link from our `index.html` listing of the Cats over to our `show.html` page.  Wrap the entire iteration of each Cat in an anchor tag in our `index.html` page:
 
 	```html
-	<!-- main_app/templates/index.html -->
+	<!-- main_app/templates/cats/index.html -->
 	...
 	{% for cat in cats %}
 	  <a href="/{{cat.id}}">
@@ -298,10 +297,10 @@ We're beginning to see repeated code in our html templates so it makes sense to 
 
 	The `block content` and `endblock` statements are the placeholders for where our 'child' html will load into our base.html template.
 
-2.  In `index.html` we will tell the templating language to send our html to `base.html` with a single line added to the top of the page.  We will also wrap our pertinent Cat iterator in the `block content` and `endblock` template tags to designate what gets loaded into our `base.html` dynamically.
+2.  In `cats/index.html` we will tell the templating language to send our html to `base.html` with a single line added to the top of the page.  We will also wrap our pertinent Cat iterator in the `block content` and `endblock` template tags to designate what gets loaded into our `base.html` dynamically.
 
 	```html
-	<!-- main_app/templates/index.html -->
+	<!-- main_app/templates/cats/index.html -->
 	{% extends 'base.html' %}
 	{% load staticfiles %}
 
@@ -311,4 +310,3 @@ We're beginning to see repeated code in our html templates so it makes sense to 
 	```
 
 	Now try out our root route on the browser and you should see no change.  Apply this code refactor to our show.html as well. Good work!
-	

@@ -208,7 +208,33 @@ def about(request):
 ```
 Our render function isn't doing very much here. We haven't added any code in our HTML that requires any rendering. But the render function is able to send out a plain HTML file even if it has no templating code inside it. Not all of our pages will need dynamic content and we can use this function in either case.
 
-With that in place, we can move on to the `index.html` and put some fancier stuff in it. We haven't hooked up a database yet but we can simulate some data by creating a class and some objects of that class and pretending that they have been returned to us from a database query. With some mock data to play with, we can actually see how we insert it into a template.
+With that in place, we can move on to the `index.html` and follow roughly the same procedure.
+
+1. Create an `index.html` file inside your `templates` folder and fill it with some basic HTML but be sure to include a link that points to `/cats`:
+
+```html
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>catcollector</title>
+  </head>
+  <body>
+    <h1>catcollector</h1>
+    <hr />
+    <a href="/cats">View All My Cats!</a>
+    <footer>All Rights Reserved, catcollector 2018</footer>
+  </body>
+</html>
+```
+
+2. Update the view function for index:
+
+```python
+def index(request):
+  return render(request, 'index.html')
+```
+
+Now we have two rather plain pages that don't do much on our site. However, the index page links to `/cats` which is what we will work on next. We haven't hooked up a database yet but we can simulate some data by creating a class and some objects of that class and pretending that they have been returned to us from a database query. With some mock data to play with, we can actually see how we insert it into a template.
 
 1.  In `views.py` lets create a Cat class with all of the attributes we want to see displayed on our index page. We can also create an array of Cat objects to act as our dataset. Add this code to the bottom of the file:
 
@@ -233,38 +259,50 @@ With that in place, we can move on to the `index.html` and put some fancier stuf
 
 Now, recall: What are the steps in making a new route?
 
-  * Create the URL for the route. We have already completed this.
-  * Write a view function for the URL. This is done also, but we will need to change some of the code. Let's look at this now:
+### Create the URL for the route.
 
-2.  We will pass this cats list into our index function to be viewed on the index page! Add a third argument to your `render()` function. It is a dictionary and we are including a key named `'cats'` that has a value of the cats list that we just put into the views:
+We will be making a route to show all cats. If we are following RESTful naming conventions then we need all Cat-related URLs to begin with `/cats`. Also recall that if we want to GET ALL CATS then we make an HTTP GET request to the URL that is the name of the collection: `/cats`. If we want to GET ONE CAT then we make an HTTP GET request to the URL of the collection plus an ID: `/cats/123`.
+
+So open your `main_app/urls.py` file and add the following line to the `urlpatterns`:
+
+```python
+path('cats/', views.cats_index, name='cats_index'),
+```
+
+### Write a view function for the URL.
+
+This view function will be a little different. We will need to pass some data in that our page will render. Add a third argument to your `render()` function. It is a dictionary and we are including a key named `'cats'` that has a value of the cats list that we just put into the views:
 
 	```python
 	# main_app/views.py
 	...
-	def index(request):
-	    return render(request, 'index.html', {'cats': cats})
+	def cats_index(request):
+	    return render(request, 'cats/index.html', {'cats': cats})
 	```
 
-	This **third** argument is the actual data we want to display! Now we can make an `index.html` template.
+This **third** argument is the actual data we want to display! Now we can make an `index.html` template.
 
-3. Create an `index.html` file inside your `templates` folder and fill it with some basic html:
+### Write the HTML template.
+
+Make a directory in your `templates` directory called `cats`. Create an `index.html` file inside your `cats` folder and fill it with some basic html:
 
 ```html
+<!-- templates/cats/index.html -->
 <!DOCTYPE html>
 <html>
   <head>
     <title>catcollector</title>
   </head>
   <body>
-    <h1>catcollector</h1>
-    <hr />>
+    <h1>the catcollector's cats</h1>
+    <hr />
 
     <footer>All Rights Reserved, catcollector 2018</footer>
   </body>
 </html>
 ```
 
-4. In our `index.html` file we will use specific Django templating language to iterate and display our data in `cats`. Add this code under the `<hr />`:
+In this file we will use specific Django templating language to iterate and display our data in `cats`. Add this code under the `<hr />`:
 
 	```html
     {% for cat in cats %}
@@ -274,48 +312,47 @@ Now, recall: What are the steps in making a new route?
     {% endfor %}
 	```
 
-	Here we see the brackets and percent symbols that delimit our Python template code. We made a `for-loop` - the top line is `{% for cat in cats %}` and the bottom line is `{% endfor %}`. We cannot write an actual Python for-loop in a Django template so we use these Django template delimiters to achieve the same result. We iterate over each `cat` in the `cats` collection and put the values of its name and age into p tags in our page. To do this, we wrap the variable in double curly braces: `{{ }}` Check out our index file on your browser and you should see our cats displayed on the screen!
+Here we see the brackets and percent symbols that delimit our Python template code. We made a `for-loop` - the top line is `{% for cat in cats %}` and the bottom line is `{% endfor %}`. We cannot write an actual Python for-loop in a Django template so we use these Django template delimiters to achieve the same result. We iterate over each `cat` in the `cats` collection and put the values of its name and age into p tags in our page. To do this, we wrap the variable in double curly braces: `{{ }}` Check out our index file on your browser and you should see our cats displayed on the screen!
 
-5. Let's add some conditional expressions to change the way our page renders based on data. If a cat has an age of 0, let's set it to display 'Kitten'. Replace the code you just added with the following:
+Let's rafactor this and add some conditional expressions to change the way our page renders based on data. If a cat has an age of 0, let's set it to display 'Kitten'. Replace the code you just added with the following:
 
-	```html
-    {% for cat in cats %}
-      <p>Name: {{ cat.name }}</p>
-      {% if cat.age > 0 %}
-        <p>Age: {{ cat.age }}</p>
-      {% else %}
-        <p>Age: Kitten</p>
-      {% endif %}
-        <hr />
-    {% endfor %}
-	```
+```html
+  {% for cat in cats %}
+    <p>Name: {{ cat.name }}</p>
+    {% if cat.age > 0 %}
+      <p>Age: {{ cat.age }}</p>
+    {% else %}
+      <p>Age: Kitten</p>
+    {% endif %}
+      <hr />
+  {% endfor %}
+```
 
-  We can see how conditionals work in Django templates. We begin an `if` statement with this line:
+We can see how conditionals work in Django templates. We begin an `if` statement with this line:
 
-  ```python
-  {% if cat.age > 0 %}
-  ```
+```python
+{% if cat.age > 0 %}
+```
 
-  We add an `else` with this line:
+We add an `else` with this line:
 
-  ```python
-  {% else %}
-  ```
+```python
+{% else %}
+```
 
-  And we close it off with this line:
+And we close it off with this line:
 
-  ```python
-  {% endif %}
-  ```
+```python
+{% endif %}
+```
 
-  These are just the basics of templating but now that we know how to loop, branch, and evaluate variables in our pages, we have a staggering amount of control over what is and isn't in our page and how it all looks. All of this template code is evaluated before the page is returned to the client so they will never see it. Django just reads our template code, decides what needs to go in the page based on the logic we write, and then replaces all the template code with the appropriate HTML. It's like having someone that will rewrite our pages for us based on any data we like.
+These are just the basics of templating but now that we know how to loop, branch, and evaluate variables in our pages, we have a staggering amount of control over what is and isn't in our page and how it all looks. All of this template code is evaluated before the page is returned to the client so they will never see it. Django just reads our template code, decides what needs to go in the page based on the logic we write, and then replaces all the template code with the appropriate HTML. It's like having someone that will rewrite our pages for us based on any data we like.
 
 ## Django staticfiles
 
 We should spruce up the look and feel of our app with some style! This templating is cool but how do we add our CSS to it? We need to utilize Django's static asset pipeline. Templates may look a lot like HTML but they go through a processor and sometimes we just want Django to leave our files alone. When we have a file that won't change all the time, like an image or stylesheet, typically a web framework gives us a special place to store these and a way to access them when needed. Django has a special directive we can use in our templates called `staticfiles`.
 
 First, we need to understand that Django expects us to put these files in a very specific place. In fact, if we don't put them where Django wants, none of it will work. And we cannot tell Django to look in a different place. So do the following and don't change any of it:
-
 
 1. Create a `static` directory in the `main_app` directory. This will house all of our static files.
 2. Create a `style.css` file within the `static` folder.
@@ -327,7 +364,7 @@ First, we need to understand that Django expects us to put these files in a very
 	}
 	```
 
-7. In our index.html we need to load our static folder and files with our templating language. We do so by declaring our usage of static files at the top of the page. We'll also show you how to link your style.css file as well:
+4. In our index.html we need to load our static folder and files with our templating language. We do so by declaring our usage of static files at the top of the page. We'll also show you how to link your style.css file as well:
 
 ```html
   <!-- Add the following line... -->
@@ -344,7 +381,7 @@ First, we need to understand that Django expects us to put these files in a very
 
 When we link in our stylesheet, we set the href like above. Using the `static` keyword basically says, "Look in the staticfiles folder for a file called style.css". We can do the same with images or JavaScript files.
 
-8. We can also add in a CSS framework like Materialize in the normal way:
+5. We can also add in a CSS framework like Materialize in the normal way:
 
 	```html
 	{% load staticfiles %}
