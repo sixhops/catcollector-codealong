@@ -37,3 +37,48 @@ class CatDelete(DeleteView):
   model = Cat
   success_url = '/cats'
 ```
+
+For the `create` and `update` forms, you must tell it which fields need to be mapped to the form. The `delete` operation needs no form but there is another page we must create for it. Let's create some templates! Inside `templates/cats` make a `cat_form.html` file and give it these contents:
+
+```html
+{% extends 'base.html' %}
+{% load staticfiles %}
+
+{% block content %}
+	<form action="" method="post">
+    {% csrf_token %}
+    <table>
+    {{ form.as_table }}
+    </table>
+    <input type="submit" value="Submit!">
+  </form>
+{% endblock %}
+```
+
+This form will be used for both `creating` and `updating`. The `delete` operation wants another file present. It will be used to confirm the deletion, basically asking the user if they are sure about what they are doing. In the same directory, create `cat_confirm_delete.html` and fill it thusly:
+
+```html
+{% extends 'base.html' %}
+{% load staticfiles %}
+
+{% block content %}
+	<h1>Delete Author</h1>
+
+  <p>Are you sure you want to delete the author: {{ author }}?</p>
+
+  <form action="" method="POST">
+    {% csrf_token %}
+    <input type="submit" value="Yes, delete.">
+  </form>
+{% endblock %}
+```
+
+Now on to the URLs. Open up `main_app/urls.py` and add these to the `urlpatterns`:
+
+```python
+path('cats/create/', views.CatCreate.as_view(), name='cats_create'),
+path('cats/<int:pk>/update/', views.CatUpdate.as_view(), name='cats_update'),
+path('cats/<int:pk>/delete/', views.CatDelete.as_view(), name='cats_delete'),
+```
+
+Now we see some routes here that use Django's syntax for variable in URLs. But in this case, we cannot choose what we name them. They must always be type `int` and be named `pk`. This stands for `primary key` and it is the variable name that Django expects the Cat ID to be in. This is another Django convention that we must accept.

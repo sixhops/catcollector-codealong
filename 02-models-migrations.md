@@ -134,18 +134,18 @@ This allows us to specify a value for one or more of the columns. Django iterate
 
 Django's ORM isn't so bad, right? In fact, it's rather understandable and easy to use. Now let's update our `main_app/views.py` to use our models! Remember to remove your Cat class definition, we won't need that anymore. Instead we will import our Cat model:
 
-	```python
-	# main_app/views.py
-	from django.shortcuts import render
-	# add this line...
-	from .models import Cat
+```python
+# main_app/views.py
+from django.shortcuts import render
+# add this line...
+from .models import Cat
 
-	def cats_index(request):
-	    cats = Cat.objects.all()
-	    return render(request, 'cats/index.html', { 'cats':cats })
-	
-	# remove the cat class and list at the bottom...
-	```
+def cats_index(request):
+		cats = Cat.objects.all()
+		return render(request, 'cats/index.html', { 'cats':cats })
+
+# remove the cat class and list at the bottom...
+```
 
 Reload your page and you should see a single Cat displayed from your database! You're a wizard, Harry!
 
@@ -209,13 +209,13 @@ The pattern of creating a new url in `urls.py`, a new view function in `views.py
 
 2.  In our `main_app/views.py` file we will need to write a function to handle the HTTP Request received for the details page of a particular item.  Lets update our file to include this function:
 
-	```python
-		# main_app/views.py
-		...
-		def show(request, cat_id):
-			cat = Cat.objects.get(id=cat_id)
-			return render(request, 'cats/show.html', {'cat': cat})
-	```
+```python
+	# main_app/views.py
+	...
+	def cats_show(request, cat_id):
+		cat = Cat.objects.get(id=cat_id)
+		return render(request, 'cats/show.html', {'cat': cat})
+```
 
 	You'll notice that we are searching by id. Django automatically assigns our models incrementing id numbers to organize our tables. Thanks Django!  That way we can look up every single cat by their unique `id` given to us. That `id` will travel with every model so we don't have to worry about assigning them one or trying to maintain it in the back-end!  SO SWEET!
 
@@ -270,7 +270,7 @@ The pattern of creating a new url in `urls.py`, a new view function in `views.py
 
 We're beginning to see repeated code in our html templates so it makes sense to break our templates into partials to save on code reuse and increase scalability.  We'll use a base template to hold our initial `head` code, our `header` section, and our `footer` section.  The partials will only contain the necessary html for each specific task.
 
-1.  Create a new `base.html` file within our templates folder. This will be our beginning 'layout' html file similar to a layout EJS file in Express:
+1.  Create a new `base.html` file within our templates folder. This will be our base 'layout' html file:
 
 	```html
 	{% load staticfiles %}

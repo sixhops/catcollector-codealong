@@ -273,12 +273,12 @@ path('cats/', views.cats_index, name='cats_index'),
 
 This view function will be a little different. We will need to pass some data in that our page will render. Add a third argument to your `render()` function. It is a dictionary and we are including a key named `'cats'` that has a value of the cats list that we just put into the views:
 
-	```python
-	# main_app/views.py
-	...
-	def cats_index(request):
-	    return render(request, 'cats/index.html', {'cats': cats})
-	```
+```python
+# main_app/views.py
+...
+def cats_index(request):
+    return render(request, 'cats/index.html', {'cats': cats})
+```
 
 This **third** argument is the actual data we want to display! Now we can make an `index.html` template.
 
@@ -304,13 +304,13 @@ Make a directory in your `templates` directory called `cats`. Create an `index.h
 
 In this file we will use specific Django templating language to iterate and display our data in `cats`. Add this code under the `<hr />`:
 
-	```html
-    {% for cat in cats %}
-      <p>Name: {{ cat.name }}</p>
-      <p>Age: {{ cat.age }}</p>
-      <hr />
-    {% endfor %}
-	```
+```html
+  {% for cat in cats %}
+    <p>Name: {{ cat.name }}</p>
+    <p>Age: {{ cat.age }}</p>
+    <hr />
+  {% endfor %}
+```
 
 Here we see the brackets and percent symbols that delimit our Python template code. We made a `for-loop` - the top line is `{% for cat in cats %}` and the bottom line is `{% endfor %}`. We cannot write an actual Python for-loop in a Django template so we use these Django template delimiters to achieve the same result. We iterate over each `cat` in the `cats` collection and put the values of its name and age into p tags in our page. To do this, we wrap the variable in double curly braces: `{{ }}` Check out our index file on your browser and you should see our cats displayed on the screen!
 
