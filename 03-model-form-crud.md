@@ -38,7 +38,7 @@ class CatDelete(DeleteView):
   success_url = '/cats'
 ```
 
-For the `create` and `update` forms, you must tell it which fields need to be mapped to the form. The `delete` operation needs no form but there is another page we must create for it. Let's create some templates! Inside `templates/cats` make a `cat_form.html` file and give it these contents:
+For the `create` and `update` forms, you must tell it which fields need to be mapped to the form. The `delete` operation needs no form but there is another page we must create for it. Let's create some templates! Inside `templates` these forms are expected to be in a folder with the same name as our app so let's create a `main_app` folder. Inside there, make a `cat_form.html` file and give it these contents:
 
 ```html
 {% extends 'base.html' %}
@@ -64,7 +64,7 @@ This form will be used for both `creating` and `updating`. The `delete` operatio
 {% block content %}
 	<h1>Delete Author</h1>
 
-  <p>Are you sure you want to delete the author: {{ author }}?</p>
+  <p>Are you sure you want to delete this cat: {{ cat }}?</p>
 
   <form action="" method="POST">
     {% csrf_token %}
