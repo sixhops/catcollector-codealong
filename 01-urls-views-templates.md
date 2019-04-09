@@ -1,17 +1,29 @@
-# The New & Improved Cat Collector Code-Along, Part 1
+# Django URLs, Views, and Templates
 
-We will be working on a full-stack app in Django all week, adding to it piece by piece as we learn how to implement the common features found in modern web applications. The six parts break down as follows:
+We will be working on a full-stack app in Django all week, adding to it piece by piece as we learn how to implement the common features found in modern web applications. The seven parts break down as follows:
 
 1. Django URLs, Views, and Templates
 2. Data Models and Migrations
 3. Django Model Forms and CRUD Operations
 4. One-to-Many (1:m) Data Relationships
 5. Many-to-Many (m:m) Data Relationships
-6. Django Authentication
+6. Cloud Image Storage with AWS
+7. Django Authentication
 
 In this first part, we will look at adding routes to our controller that allow us to serve different pages. We will also see the beginnings of the Django Templating Language that will allow us to dynamically create pages using a combination of HTML and Python and send them to the client.
 
 Let's dive in!
+
+## Creating URLs
+
+Now that we are programming our own back end, one of our new responsibilities is to define every valid route or URL for our website. In unit 1, we relied on having one page per section of any site we made. However, now using a web framework, we can map the sections of our site to any URL we want. In fact, it's probably a good idea to leave the idea of "pages" behind.
+
+We can make any URL for our site that we want. Mostly we will be making URLs of two types:
+
+* Web site content URLs: These load different content into our template layouts. These behave most like the traditional sites we made in Unit 1.
+* RESTful resource URLs: These are used when we build an API that interacts with our database.
+
+Sometimes there are exceptions and sometimes the two types are interdependent. We will focus on the RESTful API URLs a bit more in Unit 3. But now let's see how to add some basic ones to a new Django project.
 
 1. From your terminal window, navigate to your `code` directory and create a new Django project with the following command:
 
@@ -40,7 +52,7 @@ Let's dive in!
 	```
 
 	This will create a folder for `main_app` with many support files inside. Let's review some of the main ones:
-	- models.py is where we define all of our data models.
+	- models.py is where we define all of our data models. We will see that this afternoon.
 	- views.py is where we write the logic that happens when someone requests one of our URLs.
 
     We need to make sure we add this new app to our Django project. It doesn't happen automatically. In  `catcollector/catcollector/settings.py` include our 'main_app':
@@ -70,61 +82,7 @@ Let's dive in!
 
     What we've done is add a function that sends a simple string of an ASCII cat waving in response to the request from the client. The function `HttpResponse` is the simplest way to send something back in response to a request. We will learn some more powerful ways shortly. In order to use `HttpResponse`, we must import it into the file so we also added that line at the top under the import for `render`.
 
-5.  Now we will map this particular view to a URL. We do this by adding a URL that will call this function. We will use the route `/index` for now as an example.  Let's add the URL for our view in the `catcollector/catcollector/urls.py`:
-
-	```python
-    # catcollector/catcollector/urls.py
-    from django.urls import path
-    from django.contrib import admin
-    # add the line below...
-    from main_app import views
-
-    urlpatterns = [
-      path('admin/', admin.site.urls),
-      # add the line below...
-      path('index/', views.index)
-    ]
-	```
-
-	In the `path()` function, the first argument is the relative path for the URL from the root of the server. The second argument is the specific path to the view function we want to associate with our route. Now we can see our Hello World message by hitting `http://localhost:8000/index`.
-
-6.  The route `/index` is great for debugging and proof of concepts but it isn't typically the main URL of a site. Most of the time, the root of a server is just `/`. Let's change it to be the default `/` root route. In the `urlpatterns` array change the following:
-
-	```python
-	# catcollector/catcollector/urls.py
-	from django.urls import path
-	from django.contrib import admin
-	from main_app import views
-
-	urlpatterns = [
-		path('admin/', admin.site.urls),
-		# add the line below to your urlpatterns array
-		path('', views.index)
-	]
-	```
-
-	This is how we write the root route in Django: with an empty string: `''` Now head to the `/` root route and you should see our greeting! Sweet!
-
-7. We have a route to our main_app's view inside the project's URLs file. This isn't really as tidy as Django would like us to be. To keep our routes clean and separated in an orderly fashion, we will now separate our routes into their respective separate `apps` away from the main url dispatcher in `catcollector`. We will set up our project URLs to include the `main_app` URLs:
-
-	```python
-    # catcollector/catcollector/urls.py
-
-    # add include to the line below...
-    from django.urls import path, include
-    from django.contrib import admin
-
-    # remove the line below...
-    from main_app import views
-
-    urlpatterns = [
-      path('admin/', admin.site.urls),
-      # Change the line below...
-      path('', include('main_app.urls'))
-    ]
-	```
-
-	Now the project's URL file refers to the URLs in our `main_app`. This is much more organized. You will need to create a `urls.py` file inside `main_app` and we'll declare our URLs for this app in here. We will also import our view functions from the `views.py` file in `main_app`:
+5.  Now we will map this particular view to a URL. We do this by adding a URL that will call this function. We will use the route `/index` for now as an example. You will need to create a `urls.py` file inside `main_app` and we'll declare our URLs for this app in there. We will also import our view functions from the `views.py` file in `main_app`:
 
 	```python
     # main_app/urls.py
@@ -136,6 +94,28 @@ Let's dive in!
     ]
 	```
 
+	Let's look at this line by line: First we import the `path` function which is the main function we use to create a URL in Django. Then we import the view we just made. That line says to import all of the views from the current module, which is our `main_app`. Then we define a `urlpatterns` list and add a `path()` call to it. In the `path()` function, the first argument is the relative path for the URL from the root of the server. The second argument is the specific path to the view function we want to associate with our route. The `name` parameter provides an identifier we can use in other parts of Django to refer to this URL.
+
+6. With this route created, we can include it into our project. There are two `urls.py` files in Django: one for the project, and one for our app. Actually, if we create more than one app (which we won't do in this class) then all of them could have URLs that would be imported into the project. Here's how we do that:
+
+```python
+  # catcollector/catcollector/urls.py
+
+  # add include to the line below...
+  from django.urls import path, include
+  from django.contrib import admin
+
+  urlpatterns = [
+    path('admin/', admin.site.urls),
+    # Add the line below...
+    path('', include('main_app.urls'))
+  ]
+```
+
+This is how we write the root route in Django: with an empty string: `''` Now head to the `/` root route and you should see our greeting! Django is nice enough to restart its development server each time it detects that we save a source file so all you need to do is refresh your browser page to see the new index.
+
+So we added a URL! Well, we kinda already had the URL responding but we changed what it did. We pointed the root URL to our own view function and by doing that we cn control exactly what is sent back to the browser.
+
 # Add Another Route
 
 Now that we've made this route, we can reflect on the process we followed and use it to make another route. The thing to keep in mind when making new routes is that you need to do three things. The first two are:
@@ -143,9 +123,9 @@ Now that we've made this route, we can reflect on the process we followed and us
 1. Add a URL pattern to your application's `urls.py` file.
 2. Add a view function that the URL will call in your application's `views.py` file.
 
-The third step is to add a template page that the route will render and send to the client. Before we get into that step for our routes, though, let's add another route to practice the process:
+(These can really be done in either order. Netiher one will work without the other so both must be complete for anything to happen.) The third step is to add a template page that the route will render and send to the client. Before we get into that step for our routes, though, let's add another route to practice the process:
 
-We already have our project importing our `main_app` URLs into the main URL dispatcher so we can focus entirely on adding routes specifically to `main_app` from now on.
+We already have our project importing our `main_app` URLs into the main URL dispatcher so we can focus entirely on adding routes to `main_app/urls.py`.
 
 1. Open the `main_app/urls.py` file and add another URL pattern:
 
@@ -170,7 +150,7 @@ We already have our project importing our `main_app` URLs into the main URL disp
 
 # Using Django Templates
 
-This is all well and good, but we very rarely ever just send a simple string as the reponse to an HTTP request. Normally, entire pages are served up in response. Django, like many other web frameworks, allows the use of a templating engine. When we make a page using a template engine, we actually use code on the back-end to determine what the file will contain. Perhaps we want a header and a footer on all pages but what appears in the main content area between them will be determined by some Python code, and can change each time the page is built and sent! This is super-exciting because it gives us a new level of control over the content in our pages. The only thing we need to do is learn a few bits of syntax that make the templates work.
+This is all well and good, but we very rarely ever just send a simple string as the reponse to an HTTP request. Normally, entire pages of content are served up in response. Django, like many other web frameworks, allows the use of a templating engine. When we make a page using a template engine, we actually use code on the back-end to determine what the file will contain. Perhaps we want a header and a footer on all pages but what appears in the main content area between them will be determined by some Python code, and can change each time the page is built and sent! This is super-exciting because it gives us a new level of control over the content in our pages. The only thing we need to do is learn a few bits of syntax that make the templates work.
 
 Let's start with a simple template for our "about" page.
 
@@ -193,7 +173,7 @@ Let's start with a simple template for our "about" page.
 </html>
 ```
 
-3. In our `views.py` we will now be **rendering** our template instead of sending HTTP responses, so so we can update our `views.py` to remove the import of `HttpResponse`.
+3. In our `views.py` we will now be **rendering** our template instead of sending HTTP responses, so so we can update our `views.py` to comment out the import of `HttpResponse`.
 
 4. Finally, in our index function in our `views.py` file, lets update the render to show our about.html:
 
@@ -207,6 +187,8 @@ def about(request):
   return render(request, 'about.html')
 ```
 Our render function isn't doing very much here. We haven't added any code in our HTML that requires any rendering. But the render function is able to send out a plain HTML file even if it has no templating code inside it. Not all of our pages will need dynamic content and we can use this function in either case.
+
+You can think of this function as doing the same thing as `HttpResponse` in the end because they both end up delivering a string of code to the browser. However, when we use `render` we can control data that gets injected into the file and then the whole file will be sent out as a long string to the browser.
 
 With that in place, we can move on to the `index.html` and follow roughly the same procedure.
 
@@ -314,7 +296,7 @@ In this file we will use specific Django templating language to iterate and disp
 
 Here we see the brackets and percent symbols that delimit our Python template code. We made a `for-loop` - the top line is `{% for cat in cats %}` and the bottom line is `{% endfor %}`. We cannot write an actual Python for-loop in a Django template so we use these Django template delimiters to achieve the same result. We iterate over each `cat` in the `cats` collection and put the values of its name and age into p tags in our page. To do this, we wrap the variable in double curly braces: `{{ }}` Check out our index file on your browser and you should see our cats displayed on the screen!
 
-Let's rafactor this and add some conditional expressions to change the way our page renders based on data. If a cat has an age of 0, let's set it to display 'Kitten'. Replace the code you just added with the following:
+Let's rafactor this and add some conditional expressions to change the way our page renders based on data. If a cat has an age of 0, let's set it to display 'Kitten'. Update the code you just added with the following:
 
 ```html
   {% for cat in cats %}
